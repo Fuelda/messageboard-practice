@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
+import { DocumentData } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "./context/authContext";
@@ -19,6 +20,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import tw from "twin.macro";
+import css from "twin.macro";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTrashCan,
@@ -28,9 +30,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 function App() {
-  const [currentUser, serCurrentUser] = useState();
+  const [currentUser, serCurrentUser] = useState<DocumentData | null>(null);
   const [msg, setMsg] = useState("");
-  const [allMsg, setAllMsg] = useState(null);
+  const [allMsg, setAllMsg] = useState<{ id: string }[]>();
   const [msgValue, setMsgValue] = useState("");
   const [usersOpen, setUsersOpen] = useState(false);
 
@@ -48,7 +50,8 @@ function App() {
     if (user != null) {
       const currentUserRef = doc(db, "users", user.uid);
       getDoc(currentUserRef).then((documentSnapshot) => {
-        serCurrentUser(documentSnapshot.data());
+        const userData = documentSnapshot.data();
+        userData && serCurrentUser(userData);
       });
     }
 
@@ -70,7 +73,7 @@ function App() {
     const msgRef = collection(db, "messages");
     await addDoc(msgRef, {
       message: msg,
-      userName: currentUser.userName,
+      userName: currentUser && currentUser.userName,
       userId: user.uid,
       createdAt: serverTimestamp(),
     });
@@ -113,7 +116,7 @@ function App() {
             <button onClick={() => setUsersOpen(!usersOpen)}>
               <FontAwesomeIcon icon={faUsers} tw="h-7" />
             </button>
-            <div css={!usersOpen && tw`hidden`} tw="h-20  bg-gray-200 rounded">
+            <div css={!usersOpen && tw`hidden`} tw="h-20 bg-gray-200 rounded">
               <div tw="h-20 overflow-scroll px-3">
                 {allUser &&
                   allUser.map((eachUser: any) => (
@@ -144,34 +147,39 @@ function App() {
           </form>
         </div>
         <div tw="block mt-9 mx-auto">
-          {allMsg &&
+          {allMsg ? (
             allMsg.map((msg: any) => {
-              const date = msg.createdAt.toDate();
-              return (
-                <div key={msg.id}>
-                  <div tw="flex">
-                    <div tw="font-bold">{msg.userName}</div>
-                    <div tw="pl-4">
-                      {msg.message}
+              if (msg.createdAt != null) {
+                const date = msg.createdAt.toDate();
+                return (
+                  <div key={msg.id}>
+                    <div tw="flex">
+                      <div tw="font-bold">{msg.userName}</div>
+                      <div tw="pl-4">
+                        {msg.message}
 
-                      <span tw="pl-4 text-xs text-gray-400">
-                        {date.getMonth() + 1}月{date.getDate()}日{" "}
-                        {date.getHours()}:
-                        {date.getMinutes() <= 9
-                          ? "0" + date.getMinutes()
-                          : date.getMinutes()}
-                      </span>
+                        <span tw="pl-4 text-xs text-gray-400">
+                          {date.getMonth() + 1}月{date.getDate()}日{" "}
+                          {date.getHours()}:
+                          {date.getMinutes() <= 9
+                            ? "0" + date.getMinutes()
+                            : date.getMinutes()}
+                        </span>
 
-                      {msg.userId == user.uid && (
-                        <button onClick={() => deleteMsg(msg.id)}>
-                          <FontAwesomeIcon icon={faTrashCan} tw="pl-2 " />
-                        </button>
-                      )}
+                        {msg.userId == user.uid && (
+                          <button onClick={() => deleteMsg(msg.id)}>
+                            <FontAwesomeIcon icon={faTrashCan} tw="pl-2 " />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              }
+            })
+          ) : (
+            <div>ロード中......</div>
+          )}
         </div>
       </section>
     </div>

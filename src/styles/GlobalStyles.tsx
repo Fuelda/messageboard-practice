@@ -1,7 +1,6 @@
 import React from "react";
-import { Global } from "@emotion/react";
+import { Global, css } from "@emotion/react";
 import tw, { theme, GlobalStyles as BaseStyles } from "twin.macro";
-import css from "twin.macro";
 
 const customStyles = css({
   body: {

@@ -14,7 +14,7 @@ export const UserContext = createContext<any[]>([]);
 export const AuthContext = ({ children }: any) => {
   const [user, setUser] = useState("");
   const [loading, setLoading] = useState(true); //unSubができるまでloadingをtrueにしておき、childrenにreturnさせない。つまり、userにデータが入る前にreturnするのを防ぐ。
-  const [allUser, setAllUser] = useState();
+  const [allUser, setAllUser] = useState<{ id: string }[]>();
   const value: any = { user, allUser };
 
   useEffect(() => {
